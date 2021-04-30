@@ -30,14 +30,57 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
+
+
 @app.route('/user', methods=['GET'])
-def handle_hello():
+def get_users():
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+    users = User.query.all()
+    serialized_users = list(map(lambda user: user.serialize(), users))
 
-    return jsonify(response_body), 200
+    return jsonify(serialized_users), 200
+
+
+
+@app.route('/user/<int:id>', methods=['GET'])
+def get_user(id):
+
+    user = User.query.get(id)
+    serialized_user = user.serialize()
+    return jsonify(serialized_user), 200
+
+
+
+@app.route('/user', methods=['POST'])
+def create_user():
+
+    payload = request.get_json()
+
+    new_user = User(email=payload['email'], password=payload['password'])
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify(new_user.serialize()), 200
+
+
+
+@app.route('/user/<int:id>', methods=['PUT'])
+def update_user(id):
+
+    user = User.query.get(id)
+    body = request.get_json()
+    print('user',user)
+
+    user.email = body['email']
+    user.password = body['password']
+    print('updated user',user)
+
+    db.session.commit()
+
+    return jsonify(user.serialize()), 200
+
+
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
